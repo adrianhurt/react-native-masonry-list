@@ -75,6 +75,9 @@ export type Props = {
    * sure to also set the `refreshing` prop correctly.
    */
   onRefresh?: ?Function,
+  wrapperStyle?: Object,
+  columnWrapperStyle?: any,
+  verticalSeparatorWidth?: number,
 };
 type State = {
   columns: Array<Column>,
@@ -113,6 +116,9 @@ export default class MasonryList extends React.Component<Props, State> {
       }
       return <ScrollView {...props} />;
     },
+    verticalSeparatorWidth: 0,
+    wrapperStyle: {},
+    columnWrapperStyle: {},
   };
 
   state = _stateFromProps(this.props);
@@ -205,7 +211,18 @@ export default class MasonryList extends React.Component<Props, State> {
     return { length: column.heights[rowIndex], offset, index: rowIndex };
   };
 
-  _renderScrollComponent = () => <FakeScrollView style={styles.column} />;
+  _renderScrollComponent = columnIndex => {
+    const { verticalSeparatorWidth, columnWrapperStyle } = this.props;
+    return (
+      <FakeScrollView
+        style={[
+          styles.column,
+          { marginLeft: (columnIndex > 0) ? verticalSeparatorWidth : 0 },
+          (typeof columnWrapperStyle === 'function') ? columnWrapperStyle(columnIndex) : columnWrapperStyle
+        ]}
+      />
+    );
+  };
 
   _getItemCount = data => data.length;
 
@@ -219,6 +236,7 @@ export default class MasonryList extends React.Component<Props, State> {
       ListHeaderComponent,
       keyExtractor,
       onEndReached,
+      wrapperStyle,
       ...props
     } = this.props;
     let headerElement;
@@ -240,7 +258,7 @@ export default class MasonryList extends React.Component<Props, State> {
               this._getItemLayout(col.index, index)}
             renderItem={({ item, index }) =>
               renderItem({ item, index, column: col.index })}
-            renderScrollComponent={this._renderScrollComponent}
+            renderScrollComponent={() => this._renderScrollComponent(col.index)}
             keyExtractor={keyExtractor}
             onEndReached={onEndReached}
             onEndReachedThreshold={this.props.onEndReachedThreshold}
